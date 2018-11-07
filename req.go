@@ -3,6 +3,7 @@ package req
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/json"
 	"encoding/xml"
 	"errors"
@@ -18,6 +19,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/opentracing-contrib/go-stdlib/nethttp"
+	"github.com/opentracing/opentracing-go"
 )
 
 // default *Req
@@ -169,7 +173,7 @@ func (p *param) Empty() bool {
 
 // Do execute a http request with sepecify method and url,
 // and it can also have some optional params, depending on your needs.
-func (r *Req) Do(method, rawurl string, vs ...interface{}) (resp *Resp, err error) {
+func (r *Req) Do(ctx context.Context, method, rawurl string, vs ...interface{}) (resp *Resp, err error) {
 	if rawurl == "" {
 		return nil, errors.New("req: url not specified")
 	}
@@ -180,6 +184,10 @@ func (r *Req) Do(method, rawurl string, vs ...interface{}) (resp *Resp, err erro
 		ProtoMajor: 1,
 		ProtoMinor: 1,
 	}
+	req = req.WithContext(ctx)
+	req, ht := nethttp.TraceRequest(opentracing.GlobalTracer(), req, nethttp.OperationName(fmt.Sprintf("HTTP %s: %s", req.Method, req.URL.Path)))
+	defer ht.Finish()
+
 	resp = &Resp{req: req, r: r}
 
 	var queryParam param
@@ -601,76 +609,76 @@ func (m *multipartHelper) writeFile(w *multipart.Writer, fieldname, filename str
 }
 
 // Get execute a http GET request
-func (r *Req) Get(url string, v ...interface{}) (*Resp, error) {
-	return r.Do("GET", url, v...)
+func (r *Req) Get(ctx context.Context, url string, v ...interface{}) (*Resp, error) {
+	return r.Do(ctx, "GET", url, v...)
 }
 
 // Post execute a http POST request
-func (r *Req) Post(url string, v ...interface{}) (*Resp, error) {
-	return r.Do("POST", url, v...)
+func (r *Req) Post(ctx context.Context, url string, v ...interface{}) (*Resp, error) {
+	return r.Do(ctx, "POST", url, v...)
 }
 
 // Put execute a http PUT request
-func (r *Req) Put(url string, v ...interface{}) (*Resp, error) {
-	return r.Do("PUT", url, v...)
+func (r *Req) Put(ctx context.Context, url string, v ...interface{}) (*Resp, error) {
+	return r.Do(ctx, "PUT", url, v...)
 }
 
 // Patch execute a http PATCH request
-func (r *Req) Patch(url string, v ...interface{}) (*Resp, error) {
-	return r.Do("PATCH", url, v...)
+func (r *Req) Patch(ctx context.Context, url string, v ...interface{}) (*Resp, error) {
+	return r.Do(ctx, "PATCH", url, v...)
 }
 
 // Delete execute a http DELETE request
-func (r *Req) Delete(url string, v ...interface{}) (*Resp, error) {
-	return r.Do("DELETE", url, v...)
+func (r *Req) Delete(ctx context.Context, url string, v ...interface{}) (*Resp, error) {
+	return r.Do(ctx, "DELETE", url, v...)
 }
 
 // Head execute a http HEAD request
-func (r *Req) Head(url string, v ...interface{}) (*Resp, error) {
-	return r.Do("HEAD", url, v...)
+func (r *Req) Head(ctx context.Context, url string, v ...interface{}) (*Resp, error) {
+	return r.Do(ctx, "HEAD", url, v...)
 }
 
 // Options execute a http OPTIONS request
-func (r *Req) Options(url string, v ...interface{}) (*Resp, error) {
-	return r.Do("OPTIONS", url, v...)
+func (r *Req) Options(ctx context.Context, url string, v ...interface{}) (*Resp, error) {
+	return r.Do(ctx, "OPTIONS", url, v...)
 }
 
 // Get execute a http GET request
-func Get(url string, v ...interface{}) (*Resp, error) {
-	return std.Get(url, v...)
+func Get(ctx context.Context, url string, v ...interface{}) (*Resp, error) {
+	return std.Get(ctx, url, v...)
 }
 
 // Post execute a http POST request
-func Post(url string, v ...interface{}) (*Resp, error) {
-	return std.Post(url, v...)
+func Post(ctx context.Context, url string, v ...interface{}) (*Resp, error) {
+	return std.Post(ctx, url, v...)
 }
 
 // Put execute a http PUT request
-func Put(url string, v ...interface{}) (*Resp, error) {
-	return std.Put(url, v...)
+func Put(ctx context.Context, url string, v ...interface{}) (*Resp, error) {
+	return std.Put(ctx, url, v...)
 }
 
 // Head execute a http HEAD request
-func Head(url string, v ...interface{}) (*Resp, error) {
-	return std.Head(url, v...)
+func Head(ctx context.Context, url string, v ...interface{}) (*Resp, error) {
+	return std.Head(ctx, url, v...)
 }
 
 // Options execute a http OPTIONS request
-func Options(url string, v ...interface{}) (*Resp, error) {
-	return std.Options(url, v...)
+func Options(ctx context.Context, url string, v ...interface{}) (*Resp, error) {
+	return std.Options(ctx, url, v...)
 }
 
 // Delete execute a http DELETE request
-func Delete(url string, v ...interface{}) (*Resp, error) {
-	return std.Delete(url, v...)
+func Delete(ctx context.Context, url string, v ...interface{}) (*Resp, error) {
+	return std.Delete(ctx, url, v...)
 }
 
 // Patch execute a http PATCH request
-func Patch(url string, v ...interface{}) (*Resp, error) {
-	return std.Patch(url, v...)
+func Patch(ctx context.Context, url string, v ...interface{}) (*Resp, error) {
+	return std.Patch(ctx, url, v...)
 }
 
 // Do execute request.
-func Do(method, url string, v ...interface{}) (*Resp, error) {
-	return std.Do(method, url, v...)
+func Do(ctx context.Context, method, url string, v ...interface{}) (*Resp, error) {
+	return std.Do(ctx, method, url, v...)
 }
