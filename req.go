@@ -185,7 +185,7 @@ func (r *Req) Do(ctx context.Context, method, rawurl string, vs ...interface{}) 
 		ProtoMinor: 1,
 	}
 	req = req.WithContext(ctx)
-	req, ht := nethttp.TraceRequest(opentracing.GlobalTracer(), req, nethttp.OperationName(fmt.Sprintf("HTTP %s: %s", req.Method, req.URL.Path)))
+	req, ht := nethttp.TraceRequest(opentracing.GlobalTracer(), req, nethttp.OperationName(fmt.Sprintf("HTTP %s: %s", req.Method, rawurl)))
 	defer ht.Finish()
 
 	resp = &Resp{req: req, r: r}
