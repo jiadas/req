@@ -20,6 +20,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jinzhu/copier"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	"github.com/opentracing/opentracing-go"
 )
@@ -171,6 +172,8 @@ func (p *param) Empty() bool {
 	return p.Values == nil
 }
 
+type TraceRequest func(opentracing.Tracer, *http.Request, ...nethttp.ClientOption) (*http.Request, *nethttp.Tracer)
+
 // Do execute a http request with sepecify method and url,
 // and it can also have some optional params, depending on your needs.
 func (r *Req) Do(ctx context.Context, method, rawurl string, vs ...interface{}) (resp *Resp, err error) {
@@ -185,9 +188,6 @@ func (r *Req) Do(ctx context.Context, method, rawurl string, vs ...interface{}) 
 		ProtoMinor: 1,
 	}
 	req = req.WithContext(ctx)
-	req, ht := nethttp.TraceRequest(opentracing.GlobalTracer(), req, nethttp.OperationName("req"))
-	defer ht.Finish()
-
 	resp = &Resp{req: req, r: r}
 
 	var queryParam param
@@ -195,6 +195,7 @@ func (r *Req) Do(ctx context.Context, method, rawurl string, vs ...interface{}) 
 	var uploads []FileUpload
 	var uploadProgress UploadProgress
 	var progress func(int64, int64)
+	var traceRequest TraceRequest
 	var delayedFunc []func()
 	var lastFunc []func()
 
@@ -262,9 +263,29 @@ func (r *Req) Do(ctx context.Context, method, rawurl string, vs ...interface{}) 
 			resp.downloadProgress = vv
 		case func(int64, int64):
 			progress = vv
+		case TraceRequest:
+			traceRequest = vv
 		case error:
 			return nil, vv
 		}
+	}
+
+	if traceRequest != nil {
+		var ht *nethttp.Tracer
+		req, ht = traceRequest(opentracing.GlobalTracer(), req, nethttp.OperationName("req"))
+		defer ht.Finish()
+
+		resp.req = req
+
+		var client http.Client
+		if resp.client != nil {
+			copier.Copy(&client, resp.client)
+		} else {
+			copier.Copy(&client, r.Client())
+		}
+		client.Transport = &nethttp.Transport{RoundTripper: client.Transport}
+
+		resp.client = &client
 	}
 
 	if length := req.Header.Get("Content-Length"); length != "" {
