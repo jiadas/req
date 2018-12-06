@@ -349,7 +349,15 @@ func (r *Req) Do(ctx context.Context, method, rawurl string, vs ...interface{}) 
 		resp.client = r.Client()
 	}
 
-	response, err := resp.client.Do(req)
+	var response *http.Response
+	if r.flag&Lcost != 0 {
+		before := time.Now()
+		response, err = resp.client.Do(req)
+		after := time.Now()
+		resp.cost = after.Sub(before)
+	} else {
+		response, err = resp.client.Do(req)
+	}
 	if err != nil {
 		return nil, err
 	}
