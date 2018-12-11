@@ -8,6 +8,8 @@ import (
 	"net/http/cookiejar"
 	"net/url"
 	"time"
+
+	"github.com/opentracing-contrib/go-stdlib/nethttp"
 )
 
 // create a default client
@@ -73,6 +75,13 @@ func (r *Req) Flags() int {
 // Flags return output format for the *Resp
 func Flags() int {
 	return std.Flags()
+}
+
+func (r *Req) setTracingTransport() {
+	tran := r.Client().Transport
+	if _, ok := tran.(*nethttp.Transport); !ok {
+		r.Client().Transport = &nethttp.Transport{RoundTripper: tran}
+	}
 }
 
 func (r *Req) getTransport() *http.Transport {

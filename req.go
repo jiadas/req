@@ -18,9 +18,9 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
-	"github.com/jinzhu/copier"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	"github.com/opentracing/opentracing-go"
 )
@@ -129,6 +129,8 @@ type Req struct {
 	jsonEncOpts *jsonEncOpts
 	xmlEncOpts  *xmlEncOpts
 	flag        int
+
+	tracer sync.Once
 }
 
 // New create a new *Req
@@ -277,15 +279,17 @@ func (r *Req) Do(ctx context.Context, method, rawurl string, vs ...interface{}) 
 
 		resp.req = req
 
-		var client http.Client
 		if resp.client != nil {
-			copier.Copy(&client, resp.client)
+			if _, ok := resp.client.Transport.(*nethttp.Transport); !ok {
+				return nil, errors.New("req: the specified http client without nethttp.Transport while doing tracing")
+			}
 		} else {
-			copier.Copy(&client, r.Client())
-		}
-		client.Transport = &nethttp.Transport{RoundTripper: client.Transport}
+			r.tracer.Do(func() { r.setTracingTransport() })
 
-		resp.client = &client
+			if _, ok := r.Client().Transport.(*nethttp.Transport); !ok {
+				return nil, errors.New("req: the default http client without nethttp.Transport while doing tracing")
+			}
+		}
 	}
 
 	if length := req.Header.Get("Content-Length"); length != "" {
