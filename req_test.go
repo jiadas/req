@@ -2,6 +2,7 @@ package req
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"encoding/xml"
 	"io/ioutil"
@@ -26,15 +27,15 @@ func TestUrlParam(t *testing.T) {
 		}
 	}
 	ts := httptest.NewServer(http.HandlerFunc(queryHandler))
-	_, err := Get(ts.URL, QueryParam(m))
+	_, err := Get(context.TODO(), ts.URL, QueryParam(m))
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = Head(ts.URL, Param(m))
+	_, err = Head(context.TODO(), ts.URL, Param(m))
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = Put(ts.URL, QueryParam(m))
+	_, err = Put(context.TODO(), ts.URL, QueryParam(m))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,7 +57,7 @@ func TestFormParam(t *testing.T) {
 	}
 	ts := httptest.NewServer(http.HandlerFunc(formHandler))
 	url := ts.URL
-	_, err := Post(url, formParam)
+	_, err := Post(context.TODO(), url, formParam)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -70,7 +71,7 @@ func TestParamWithBody(t *testing.T) {
 	}
 	buf := bytes.NewBufferString(reqBody)
 	ts := newDefaultTestServer()
-	r, err := Post(ts.URL, p, buf)
+	r, err := Post(context.TODO(), ts.URL, p, buf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -107,7 +108,7 @@ func TestParamBoth(t *testing.T) {
 	}
 	ts := httptest.NewServer(http.HandlerFunc(handler))
 	url := ts.URL
-	_, err := Patch(url, urlParam, formParam)
+	_, err := Patch(context.TODO(), url, urlParam, formParam)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -128,13 +129,13 @@ func TestBody(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(handler))
 
 	// string
-	_, err := Post(ts.URL, body)
+	_, err := Post(context.TODO(), ts.URL, body)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// []byte
-	_, err = Post(ts.URL, []byte(body))
+	_, err = Post(context.TODO(), ts.URL, []byte(body))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -142,13 +143,13 @@ func TestBody(t *testing.T) {
 	// *bytes.Buffer
 	var buf bytes.Buffer
 	buf.WriteString(body)
-	_, err = Post(ts.URL, &buf)
+	_, err = Post(context.TODO(), ts.URL, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// io.Reader
-	_, err = Post(ts.URL, strings.NewReader(body))
+	_, err = Post(context.TODO(), ts.URL, strings.NewReader(body))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -182,7 +183,7 @@ func TestBodyJSON(t *testing.T) {
 	})
 
 	ts := httptest.NewServer(handler)
-	resp, err := Post(ts.URL, BodyJSON(&c))
+	resp, err := Post(context.TODO(), ts.URL, BodyJSON(&c))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -190,7 +191,7 @@ func TestBodyJSON(t *testing.T) {
 
 	SetJSONEscapeHTML(false)
 	SetJSONIndent("", "\t")
-	resp, err = Put(ts.URL, BodyJSON(&c))
+	resp, err = Put(context.TODO(), ts.URL, BodyJSON(&c))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -225,14 +226,14 @@ func TestBodyXML(t *testing.T) {
 	})
 
 	ts := httptest.NewServer(handler)
-	resp, err := Post(ts.URL, BodyXML(&c))
+	resp, err := Post(context.TODO(), ts.URL, BodyXML(&c))
 	if err != nil {
 		t.Fatal(err)
 	}
 	checkData(resp.reqBody)
 
 	SetXMLIndent("", "    ")
-	resp, err = Put(ts.URL, BodyXML(&c))
+	resp, err = Put(context.TODO(), ts.URL, BodyXML(&c))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -252,7 +253,7 @@ func TestHeader(t *testing.T) {
 		}
 	}
 	ts := httptest.NewServer(http.HandlerFunc(handler))
-	_, err := Head(ts.URL, header)
+	_, err := Head(context.TODO(), ts.URL, header)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -261,7 +262,7 @@ func TestHeader(t *testing.T) {
 	for key, value := range header {
 		httpHeader.Add(key, value)
 	}
-	_, err = Head(ts.URL, httpHeader)
+	_, err = Head(context.TODO(), ts.URL, httpHeader)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -301,12 +302,12 @@ func TestUpload(t *testing.T) {
 		}
 	}
 	ts := httptest.NewServer(http.HandlerFunc(handler))
-	_, err := Post(ts.URL, upload)
+	_, err := Post(context.TODO(), ts.URL, upload)
 	if err != nil {
 		t.Fatal(err)
 	}
 	ts = newDefaultTestServer()
-	_, err = Post(ts.URL, File("*.go"))
+	_, err = Post(context.TODO(), ts.URL, File("*.go"))
 	if err != nil {
 		t.Fatal(err)
 	}

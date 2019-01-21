@@ -1,6 +1,7 @@
 package req
 
 import (
+	"context"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -24,7 +25,7 @@ func TestToJSON(t *testing.T) {
 		w.Write(data)
 	}
 	ts := httptest.NewServer(http.HandlerFunc(handler))
-	r, err := Get(ts.URL)
+	r, err := Get(context.TODO(), ts.URL)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,7 +55,7 @@ func TestToXML(t *testing.T) {
 		w.Write(data)
 	}
 	ts := httptest.NewServer(http.HandlerFunc(handler))
-	r, err := Get(ts.URL)
+	r, err := Get(context.TODO(), ts.URL)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -83,7 +84,7 @@ func TestFormat(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(handler))
 
 	// %v
-	r, err := Post(ts.URL, reqBody, Header{reqHeader: "hello"})
+	r, err := Post(context.TODO(), ts.URL, reqBody, Header{reqHeader: "hello"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -117,7 +118,7 @@ func TestBytesAndString(t *testing.T) {
 		w.Write([]byte(respBody))
 	}
 	ts := httptest.NewServer(http.HandlerFunc(handler))
-	r, err := Get(ts.URL)
+	r, err := Get(context.TODO(), ts.URL)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -1,6 +1,7 @@
 package req
 
 import (
+	"context"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -22,7 +23,7 @@ func TestDumpText(t *testing.T) {
 	header := Header{
 		reqHeader: "hello",
 	}
-	resp, err := Post(ts.URL, header, reqBody)
+	resp, err := Post(context.TODO(), ts.URL, header, reqBody)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,7 +46,7 @@ func TestDumpUpload(t *testing.T) {
 		},
 	}
 	ts := newDefaultTestServer()
-	r, err := Post(ts.URL, uploads, Param{"hello": "req"})
+	r, err := Post(context.TODO(), ts.URL, uploads, Param{"hello": "req"})
 	if err != nil {
 		t.Fatal(err)
 	}
